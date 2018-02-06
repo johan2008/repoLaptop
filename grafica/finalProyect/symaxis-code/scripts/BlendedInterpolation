@@ -1,0 +1,118 @@
+#!/bin/bash
+
+   # change some parameters. You can change more in settings.txt
+   # num samples
+numSamples=256
+	# visualization
+visualize=true
+	# working directory
+workDir="./WorkDir"
+	# Interpolation Method
+		# simple version if true corrs are evenly distributed
+interpolation="MultiConformal"
+		# if true corrs are NOT evenly distributed, generate a map - 
+		#    assign mutually closest samples as true corrs - iterate
+#interpolation="MultiConformalSmartTakeClosest"
+	# increase/decrease this number to choose how conformal maps are constructed:
+	#	single correspondence + furthest, all pairs + furthest, or all triplets
+maxConfMaps=500
+	# executable
+blendedInterpolationExe="./SurfaceVis"
+    # settings
+blendedSettings="./settingsBlended.txt"
+visSettings="./renderBlended.txt"
+
+#excludedCorrs="none"
+
+	# read file names as arguments - or use default
+if [ $# -ge 8 ]; then
+	mesh1=$1
+	mesh2=$2
+	coarseCorr=$3
+	loadTriplets=$4
+	workDir=$5
+	blendedInterpolationExe=$6
+	blendedSettings=$7
+	visSettings=$8
+else
+	echo "Example: ./BlendedInterpolation mesh1.off mesh2.off coarse.cor loadtrips workdir blendedexe blendedsettings vissettings"
+	echo "                   [optional: weightedTriplets.txt]"
+	echo "------------- NOTES -------- "
+	echo "Optionally one can provide weightedTriplets.txt file with triplets "
+	echo "   (to define conformal maps) and weights. Each line should list 3 integer"
+	echo "   ids of correspondences from coarseCorr and a floating-point weight."
+	exit
+fi
+
+	# separate file name and extension - to create workspace directory
+if [ ! -f $mesh1 ]; then
+	echo File $mesh1 does not exist!
+	exit
+fi;
+
+if [ ! -f $mesh2 ]; then
+	echo File $mesh2 does not exist!
+	exit
+fi;
+
+if [ ! -f $coarseCorr ]; then
+	echo File $coarseCorr does not exist!
+	exit
+fi
+
+fileonly1=`basename $mesh1`
+fileonly2=`basename $mesh2`
+ext="."`echo "$fileonly1" | cut -d'.' -f2`
+mesh1name=`echo "$fileonly1" | cut -d'.' -f1`
+mesh2name=`echo "$fileonly2" | cut -d'.' -f1`
+
+if [ ! -d $workDir ]; then
+	mkdir $workDir
+fi
+
+if [ ! -d $workDir ]; then
+	echo [ERROR] Could not create work directory: $workDir
+	exit
+fi
+	
+	# create workspace directory, copy files
+if [ ! -d $workDir/$mesh1name ]; then
+	mkdir $workDir/$mesh1name
+fi
+
+if [ ! -f $workDir/$mesh1name/$mesh1name$ext ]; then
+	cp $mesh1 $workDir/$mesh1name
+fi
+
+if [ ! -d $workDir/$mesh2name ]; then
+	mkdir $workDir/$mesh2name/
+fi
+
+if [ ! -f $workDir/$mesh2name/$mesh2name$ext ]; then
+	cp $mesh2 $workDir/$mesh2name/
+fi
+
+	# NOTE: arguments to SurfaceVis below OVERWRITE settings.txt file
+	# I included them here for simplicity - so that one would not have to modify settings.txt
+	
+	# Set input files (copied to their work directories)
+params="-ConfSurfaces MeshName [$mesh1name $mesh2name] MeshExt $ext"
+	# Set number of samples on surface
+params="$params -SamplesFine_EVEN MaxSamples $numSamples"
+	# output dense map
+params="$params -Pipeline FinalExternalMap $coarseCorr WorkFolder $workDir"
+	# visualize ? 
+params="$params -Pipeline Visualize	$visualize"
+	# what kind of interpolation to use
+params="$params -AlgCorrConfmaps ExtrapolationMethod $interpolation"
+	# triplets to load
+params="$params -AlgCorrConfmaps Triplets $loadTriplets"
+	# max number of conformal maps
+params="$params -AlgCorrConfmaps MaxConformalMaps $maxConfMaps"
+	# vis settings
+params="$params -Pipeline VisSettings $visSettings"
+
+$blendedInterpolationExe $blendedSettings $params
+result=BlendedInterpolated_DenseMap_"$mesh1name"_to_"$mesh2name".dense.gaps.map
+echo "Finished blending intrinsic maps. See the result in:"
+echo "     $result"

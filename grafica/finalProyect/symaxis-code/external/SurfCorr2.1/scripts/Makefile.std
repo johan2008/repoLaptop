@@ -1,0 +1,66 @@
+#
+# Some things to define
+#
+
+#GAPS=../../../Libs/GAPS/
+GAPS=../../external/gaps/
+
+
+#
+# Targets
+#
+
+OBJS=$(CCSRCS:.cpp=.o) $(CSRCS:.c=.o) 
+INCS=$(HSRCS) $(CCSRCS:.cpp=.h) $(CSRCS:.c=.h)
+
+
+
+#
+# C flags
+#
+
+CC=g++
+BASE_CFLAGS=$(USER_CFLAGS) -Wall -I. -I$(GAPS) -I$(GAPS)/pkgs -I../../Libs
+DEBUG_CFLAGS=$(BASE_CFLAGS) -g
+OPT_CFLAGS=$(BASE_CFLAGS) -O3 -DWITH_CXSPARSE
+#-DWITH_GSL
+CFLAGS=$(DEBUG_CFLAGS)
+
+
+#
+# Get the operating system and architecture type
+#
+
+OS=$(shell uname)
+ARCH=$(shell uname -m)
+
+GAPS_LIB=-L$(GAPS)/lib/$(ARCH)/ -lR3Graphics -lR3Shapes -lR2Shapes -lRNBasics -ljpeg
+
+ifeq ("$(OS)","Darwin")
+	OPT_CFLAGS += -DOS__MAC_OSX__
+endif
+
+#
+# Directories
+#
+
+RELEASE_DIR=./release
+EXE_DIR=../../bin/$(ARCH)
+LIB_DIR=../../lib/$(ARCH)
+
+BASE_CFLAGS+=$(addprefix -I../../Libs/, $(PKG_LIBS))
+BASE_CFLAGS+=$(addprefix -I../../external/, $(EXT_LIBS))
+
+
+#
+# Default rules
+#
+
+.SUFFIXES: .cpp .c .o
+
+.cpp.o:
+	$(CC) $(CFLAGS) -c $<
+
+.c.o:
+	gcc $(CFLAGS) -c $<
+

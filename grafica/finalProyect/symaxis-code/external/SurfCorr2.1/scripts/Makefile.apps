@@ -1,0 +1,110 @@
+
+# Makefile for GAPS applications
+#
+
+
+
+#
+# Before this Makefile is included ...
+#   $(NAME) should be module name
+#   $(CCSRCS) should list C++ source files
+#   $(CSRCS) should list C source files
+#
+# For example ...
+#   NAME=foo
+#   CCSRCS=$(NAME).C \
+#       foo1.C foo2.C foo3.C
+#   CSRCS=foo4.c foo5.c
+#
+
+
+#
+# Set up compiler options, etc.
+#
+
+include ../../scripts/Makefile.std
+
+
+
+
+#
+# Set up target app
+#
+
+EXE = $(EXE_DIR)/$(NAME)
+
+
+
+#
+# Set up link options
+#
+
+BASE_LDFLAGS=$(USER_LDFLAGS) -L$(LIB_DIR)
+DEBUG_LDFLAGS=$(BASE_LDFLAGS) -g
+OPT_LDFLAGS=$(BASE_LDFLAGS) -O 
+LDFLAGS=$(DEBUG_LDFLAGS)
+
+#PKG_LIBS_FOLDERS=$(addprefix -L../../lib/$(ARCH)/, $(PKG_LIBS))
+#PKG_LIBS_FOLDERS="-L../../lib/$(ARCH)/"
+PKG_LIBS_FILES=$(addprefix -l, $(PKG_LIBS))
+
+#EXT_LIBS_FOLDERS=$(addprefix -L../../external/, $(EXT_LIBS))
+#EXT_LIBS_FILES=$(addprefix -l, $(EXT_LIBS))
+
+#-lblas
+EXT_LIBS_FILES = -llapack -lcblas  -latlas 
+EXT_LIBS_FILES += -L../../external/CXSparse/Lib -lcxsparse
+
+#-L../../external/gsl/ -lgsl -lgslcblas
+#EXT_LIBS_FILES += -L../../external/svd/ -lsvd
+#EXT_LIBS_FILES += -L../../external/ARPACK/SRC/ -larpack_`uname -m`
+
+#
+# Set up libs
+#
+
+# opengl
+OPENGL_LIBS=-lglut -lGLU -lGL -lm 
+ifeq ("$(OS)","Darwin")
+	EXT_LIBS_FILES += -framework Accelerate
+	OPENGL_LIBS = -lm -framework OpenGL -framework GLUT
+endif
+ifeq ("$(OS)","Cygwin")
+	OPENGL_LIBS=-lglut32 -lglu32 -lopengl32
+endif
+
+
+LIBS=$(USER_LIBS) $(PKG_LIBS_FILES) $(EXT_LIBS_FOLDERS) $(EXT_LIBS_FILES) $(OPENGL_LIBS) $(GAPS_LIB)
+
+
+
+#
+# Make targets
+#
+
+opt:
+	    $(MAKE) $(EXE) "CFLAGS=$(OPT_CFLAGS)" "LDFLAGS=$(OPT_LDFLAGS)"
+
+debug:
+	    $(MAKE) $(EXE) "CFLAGS=$(DEBUG_CFLAGS)" "LDFLAGS=$(DEBUG_LDFLAGS)"
+
+$(EXE):	    $(OBJS) $(LIBDIR)
+	    mkdir -p $(EXE_DIR)
+	    $(CC) -o $(EXE) $(LDFLAGS) $(USER_OBJS) $(OBJS) $(LIBS)
+
+release:
+	    mkdir -p $(RELEASE_DIR)/apps
+	    mkdir $(RELEASE_DIR)/apps/$(NAME)1
+	    cp *.[cCIh] $(RELEASE_DIR)/apps/$(NAME)1
+	    cp Makefile $(RELEASE_DIR)/apps/$(NAME)1
+	    rm -r -f $(RELEASE_DIR)/apps/$(NAME)
+	    mv $(RELEASE_DIR)/apps/$(NAME)1 $(RELEASE_DIR)/apps/$(NAME)
+
+clean:
+	    -  rm -f *~ *.o $(EXE)
+
+
+
+
+
+

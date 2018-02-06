@@ -1,0 +1,122 @@
+Pipeline:
+	Load				[Surface Features Samples Distances Maps]
+	Process				[#Surface #Distances #Features #Samples #Maps]
+	MapProcess			[ExploreConformals Aggregate Extrapolate]
+	Algorithm			AlgCorrConfmaps
+	Verbous				Min
+	WorkFolder			./
+	Subdirs				DirByMeshname
+	Visualize			true
+	VisSettings			./renderMobVoting.txt
+	RecordTiming			true
+	PostFinal			[#DenseMap]
+
+AlgCorrConfmaps:
+	Type				PipelineExploreConfmaps
+	Surface				ConfSurfaces
+
+	GeneratorSets		[RandomTripletSampler]
+	SamplesMobVoteCast	SamplesFine_EVEN
+	SamplesFineCorr		SamplesFine_EVEN
+	SamplesForErr		SamplesFine_EVEN
+	SamplesForFineErr	SamplesFine_EVEN
+	
+	LoadSimilarities	[none]
+	LoadConfidences		[none]
+	
+	AggregationMethod		VoteInCorrMatrixGreedy
+	
+	ExtrapolationMethod	GMDS
+		
+	CoarseFinalMapExt	.final.coarse.map
+	FinalMapExt		.final.map
+	ConfMapExt		.Mobius.Voting.Result.map
+	ConfCollectExt		.conf.collection.map
+	MultiCollectExt		.multi.collection.map
+	PickBestConf		.3
+	PickBestFinal		1.
+	FurtherPairsSearch	true
+
+	MapEvaluator		none
+	FineMapEvaluator	none
+	OutputName		MobVote
+	
+ConfSurfaces:
+	Type				SurfaceMidEdgeConf
+	MeshName			[cat0 cat1]
+	MeshExt				.off
+	FlatExt				.flt.ifs
+	FlatSmoothIters			0
+	LoadSymmetry			[none]
+		
+	DefaultMetric			GeodesicSubsets
+	AdditionalMetrics		[OnTheFlyDistances]
+	Features			[AGDFeature CurvFeature]
+	Samples				[SamplesMobVoteCast_AGD SamplesCurvatureExtrema  SamplesFine_EVEN AllVertices ]
+
+GeodesicSubsets:
+	Type				DistanceLazySubsets
+	Calculation			GEODIST_DIJKSTRA_FUNKHOUSER
+	SetsFrom			[SamplesMobVoteCast_AGD SamplesCurvatureExtrema  SamplesFine_EVEN ]
+	SetsTo				all
+	Extension			.geodesic.distances
+
+OnTheFlyDistances:
+	Type				DistanceOnTheFly
+	Calculation			GEODIST_DIJKSTRA_FUNKHOUSER
+	TryDefault			true
+	NumCachedVertices		-1
+	
+AGDFeature:
+	Type				FeatureFastAGD
+	#Type				FeatureAGD
+	Extension			.feat.vals
+	NInit				256
+
+CurvFeature:
+	Type				FeatureCurvature
+	Extension			.curvature.vals
+	NInit				-1
+
+SamplesMobVoteCast_External:
+	Type				External
+	Filenames			[pid1 pid2]
+
+SamplesMobVoteCast_AGD:
+	#Type				SurfaceSampleSet_Extrema
+	Type				SurfaceSampleSet_Max
+	CorrFeature			AGDFeature
+	MaxSamples			10
+	MinSamples			5
+	#SmoothingIters		5
+	ExtremaRingRadius	.1
+	Extension			.smplset.agd
+
+SamplesCurvatureExtrema:
+	#Type				SurfaceSampleSet_Extrema
+	Type				SurfaceSampleSet_Max
+	CorrFeature			CurvFeature
+	MaxSamples			100
+	MinSamples			1
+	ExtremaRingRadius	.01
+	Extension			.smplset.curv
+
+SamplesFine_EVEN:
+	Type				SurfaceSampleSet_MGD
+	InitialSet			SamplesCurvatureExtrema	
+	MaxIterations			10000
+	IterationTau			1.
+	MaxSamples			0
+	Extension			.smplset.even
+	
+RandomTripletSampler:
+	Type				SetSampler
+	NumCorrespondences		3
+	IterationType			Random
+	MaxNumSamples			0
+	MinDistThresh			0
+	DistToOtherThresh		0
+
+
+
+

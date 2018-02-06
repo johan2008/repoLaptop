@@ -1,0 +1,151 @@
+Pipeline:
+	Load				[Surface Features Samples Distances Maps]
+	Process				[#Surface #Distances #Features #Samples #Maps]
+	MapProcess			[ExploreConformals Aggregate Extrapolate]
+	Algorithm			AlgCorrConfmaps
+	#BenchmarkQuery		[MapConfidence_Truth]
+	LoadExternalResult	none
+	FinalExternalMap	none
+	Verbous				Min
+	WorkFolder			./
+	Subdirs				DirByMeshname
+	#Subdirs			none
+	Visualize			true
+	VisSettings			./renderSymmetryBestConf.txt
+	RecordTiming		true
+	PostFinal			[#DenseMap]
+	AnalyzeCollFrac		0.
+	AnalyzeCollNum		100
+
+AlgCorrConfmaps:
+	Type				PipelineExploreConfmaps
+	Surface				ConfSurfaces
+	GeneratorSets		[TripletSampler_Adaptive_Symm]
+	SamplesMobVoteCast	SamplesMobVoteCast_AGD
+	SamplesFineCorr		SamplesFine_EVEN	
+	SamplesForErr		SamplesFine_EVEN
+	SamplesForFineErr	SamplesFine_EVEN
+	
+	LoadConfidences		[MapConfidence_TriangleArea  ]
+	
+	AggregationMethod		PickBest
+	ExtrapolationMethod	GMDS
+		
+	CoarseFinalMapExt	.final.coarse.map
+	FinalMapExt			.final.map
+	ConfCollectExt		.conf.collection.map
+	MultiCollectExt		.multi.collection.map
+	PickBestConf		.8
+	FurtherPairsSearch	true
+
+	MapEvaluator		MapConfidence_TriangleArea
+	
+	FineMapEvaluator	MapConfidence_TriangleArea
+	
+	RefinementMapEval	MapConfidence_TriangleArea
+	RefineEnergyFrac	.85
+	OutputName		IS_BestConf
+	
+ConfSurfaces:
+	Type				SurfaceMidEdgeConf
+	#Type				Surface
+	MeshName			[dinopet mesh001]
+	MeshExt				.off
+	FlatExt				.flt.ifs
+	FlatSmoothIters		0
+	LoadSymmetry		[Reflection]
+	
+	CameraFile			[camera.txt camera.txt]
+	CameraLine			[0 0]
+	CameraOrigin		[none 0 0 none 0 0]
+	CameraTowards		[none 0 0 none 0 0]
+	CameraUp			[none 0 0 none 0 0]
+	
+	#DefaultMetric		SimpleMetric
+	DefaultMetric		GeodesicSubsets
+	AdditionalMetrics	[OnTheFlyDistances]
+	Features			[AGDFeature]
+	Samples				[SamplesMobVoteCast_AGD SamplesFine_EVEN AllVertices]
+
+SimpleMetric:
+	Type				DistanceGeodesic
+	Calculation			GEODIST_DIJKSTRA_FUNKHOUSER
+	Extension			.geodesic.distances
+
+GeodesicSubsets:
+	Type				DistanceLazySubsets
+	Calculation			GEODIST_DIJKSTRA_FUNKHOUSER
+	SetsFrom			[SamplesMobVoteCast_AGD SamplesFine_EVEN ]
+	SetsTo				all
+	Extension			.geodesic.distances
+
+OnTheFlyDistances:
+	Type				DistanceOnTheFly
+	Calculation			GEODIST_DIJKSTRA_FUNKHOUSER
+	TryDefault			true
+	NumCachedVertices	-1
+
+MapConfidence_Truth:
+	Type				MapConfidenceCompareToTruth
+	#MapType			CoarseMap_FeaturePointsCorrespondence	
+	MapType				CoarseMap_SameVertexIDs
+	AtSamples			none
+	AtSamplesRange		BenchmarkQuery
+	#AtSamplesRange		FinalConformalMap
+	RangeAlgPrefix		Lipman
+	Path				../../../Libs/Data/Meshes/scape/truth_vts_scapecomp_original/
+	FileVertexIDs		[xxx.vts xxx.vts] 
+	TruthThreshold		.2
+	Extension			.benchmark.map
+	
+AGDFeature:
+	Type				FeatureFastAGD
+	#Type				FeatureAGD
+	Extension			.feat.vals
+	NInit				256
+
+SamplesMobVoteCast_AGD:
+	Type				SurfaceSampleSet_Extrema
+	CorrFeature			AGDFeature
+	MaxSamples			10
+	MinSamples			5
+	ExtremaRingRadius	.1
+	Extension			.smplset.agd
+		
+SamplesFine_EVEN:
+	Type				SurfaceSampleSet_MGD
+	InitialSet			SamplesMobVoteCast_AGD	
+	MaxIterations		256
+	IterationTau		1.
+	MaxSamples			256
+	Extension			.smplset.even
+	
+TripletSampler_Adaptive_Symm:
+	Type				SetSamplerAdaptive
+	FullSampler			TripletSampler_Full_Symm
+	MaxNumSamples		2000
+
+TripletSampler_Full_Symm:
+	Type				SymmetricSetSampler
+	NumCorrespondences	3
+	IterationType		Exhaustive
+	MinDistThresh		.1
+	FeatureThresh		[AGDFeature .8]
+	DistToOtherThresh	.5
+	MaxNumSamples		100000
+
+MapConfidence_TriangleArea:
+	Type				MapConfidenceFaceArea
+	ValueType			TRIAREA_VAL_MIN_OVER_MAX
+	AtSamples			SamplesFine_EVEN
+	AtSamplesRange		SamplesFine_EVEN
+	
+MapConfidence_Fraction_MCN:
+	Type				MapConfidenceMutuallyClosest
+	Matching			F2C_MUTUALLY_CLOSEST_NEIGHBORS
+	MapValue			MCN_Fraction
+	
+
+
+
+

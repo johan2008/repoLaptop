@@ -1,0 +1,39 @@
+RendererDefault:
+	Type				SurfaceCorrespondence
+	NumSurfaces 			2
+	MeshFlags			[Faces]
+	SurfFlags			[none]
+	
+	Alpha				.9
+
+	ConfSurf			RenderOriginal
+
+	ShotOnly			false
+	ShotName			Screenshot
+	ShotTypes			[InitialEmptyShot BestConformal]
+
+	RenderMap			[BestConformal]
+	MapFlags			[Edges Colors]
+	MaxNumMapColors			256
+	MaxNumMapEdges			256
+	MaxCoarseElements		256
+	RenderCorrCoarse		[MapMultiConformal MapConformal]
+	
+	DrawMapColorsOnSurf 		none
+	ConfMapInMultiMap		0
+
+	SingleCorrColor			none
+
+	SelectedConfMap		-1
+	DistFromConfMap		-1
+
+	AlgorithmFlags		[none]
+
+	SelectedVertex		[0 -1 1 -1]
+	SelectedSample		[0 -1 1 -1]
+	SelectedSequence	[-1]
+	CorrToSelected		[-1]
+	
+
+
+

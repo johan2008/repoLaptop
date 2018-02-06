@@ -1,0 +1,3 @@
+#!/bin/bash
+python run.py ../data/SampleModels/392.off ../data/SampleModels/386.off ../scratch/392-386
+python run.py ../data/SampleModels/mesh000.off ../data/SampleModels/mesh037.off ../scratch/mesh000-mesh037

@@ -1,0 +1,126 @@
+#!/bin/bash
+
+   # change some parameters. You can change more in settings.txt
+   # num samples - to approximate confidence and similarity
+numSamples=256
+	# set to false if you only want images / dense map
+visualize=true
+	# work folder
+workDir="./WorkDir"
+    # executable
+blendedInterpolationExe="./SurfaceVis"
+    # settings
+basicSettings="./settings.txt"
+visSettings='./vis.txt'
+
+	# read file names as arguments - or use default
+if [ $# -ge 5 ]; then
+	mesh=$1
+    workDir=$2
+    blendedInterpolationExe=$3
+    basicSettings=$4
+    visSettings=$5
+else
+	echo =============================
+	echo ============ USAGE: =========
+	echo "    ./IntrinsicSymmetryBlended mesh1.off [optional: mesh1Gen.pnts mesh1.conf.triplets MinNumShared work_dir %mesh1.confidences]"
+	echo
+	echo ============ NOTES: =========
+	echo "    if you dont have MATLAB installed -"
+	echo "           open set useMatlab=false (in IntrinsicSymmetryBlended)"
+	echo "    you can define input feature points: 	mesh1Gen.pnts 	(1 integer = vertex id per line)"
+	echo "    you can define input triplets: 	mesh1.conf.triplets "
+	echo "                     (6 integers + double, [p1 p2 p3 p4 p5 p6 weight] p1->p2, p3->p4, p5->p6)"
+	echo "    single integer MinNumShared, this integer indicates how many generators need "
+	echo "                      to overlap for a pair of conformal maps. Can be: -1, 0, 1, 2"
+	echo =============================
+	exit
+fi
+
+############ YOU SHOULD NOT NEED TO EDIT ANYTHING BELOW THIS LINE #######################
+	# by default eigendecomposition of the sparse blended matrix is used via MATLAB
+	# (ran as external command). If you don't have MATLAB installed - 
+	# set useMatlab=false and SVDLIBC will be used instead.
+matlabPath="/usr/local/matlab/bin/"
+useMatlab=true
+if [ $useMatlab == "true" ]; then
+	PATH="$PATH:$matlabPath"
+	export PATH
+	useMatlab=matlab
+else
+	useMatlab=SVDLib
+fi
+
+if [ ! -d $workDir ]; then
+	mkdir $workDir
+fi
+
+if [ ! -d $workDir ]; then
+	echo Could not find work folder: $workDir
+	exit
+fi
+
+
+
+	# separate file name and extension - to create workspace directory
+if [ ! -f $mesh ]; then
+	echo File $mesh does not exist!
+fi;
+
+fileonly=`basename $mesh`
+ext="."`echo "$fileonly" | cut -d'.' -f2`
+meshname=`echo "$fileonly" | cut -d'.' -f1`
+	
+	# create workspace directory, copy files
+if [ ! -d $workDir/$meshname ]; then
+	mkdir $workDir/$meshname
+fi
+
+if [ ! -f $workDir/$meshname/$meshname$ext ]; then
+	cp $mesh $workDir/$meshname
+fi
+
+	# NOTE: arguments to SurfaceVis below OVERWRITE settings.txt file
+	# I included them here for simplicity - so that one would not have to modify settings.txt
+	
+	# Set input files (copied to their work directories)
+params="-ConfSurfaces MeshName [$meshname] MeshExt $ext"
+	# Set number of samples on surface
+params="$params -SamplesFine_EVEN MaxSamples $numSamples"
+	# Set whether to use matlab
+params="$params -AlgCorrConfmaps SVDSparse $useMatlab"
+	# Set whether to open visualization
+params="$params -Pipeline Visualize $visualize"
+	# Set workDir
+params="$params -Pipeline WorkFolder $workDir"
+
+
+if [ $# -ge 6 ]; then	# input generators
+	if [ $6 != "none" ]; then
+		params="$params -SamplesMobVoteCast_AGD Type External Filenames [$6 $6]"
+	fi
+fi
+
+if [ $# -ge 7 ]; then	# input potential triplets
+	params="$params -AlgCorrConfmaps LoadConfMaps $7"
+fi
+
+
+if [ $# -ge 8 ]; then	# input number shared
+	params="$params -AlgCorrConfmaps MinNumShared $8"
+fi
+
+	# vis settings
+params="$params -Pipeline VisSettings $visSettings"
+
+#if [ $# -ge 5 ]; then	# input another term to confidence
+#	params="$params -AlgCorrConfmaps LoadConfidenceValues $4"
+#fi
+
+$blendedInterpolationExe $basicSettings $params
+result=$workDir/$mesh1name/IS_Blended_DenseMapPreceise_"$meshname"_to_"$meshname".dense.preceise.map
+
+echo "Finished blending intrinsic maps. See the result in:"
+echo "     $result"
+echo "Format description: "
+echo "   http://www.cs.princeton.edu/~vk/CorrsCode/doc_bin.html#dense.preceise.map"

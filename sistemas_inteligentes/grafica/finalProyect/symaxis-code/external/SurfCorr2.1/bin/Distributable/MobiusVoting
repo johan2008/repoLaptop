@@ -1,0 +1,108 @@
+#!/bin/bash
+# !/bin/sh
+
+
+   # change some parameters. You can change more in settings.txt
+#numVotes=2500000		# number of votes to cast O(numSamples^3 * 10 )
+numVotes=100000		# number of votes to cast O(numSamples^3 * 10 )
+numSamples=100			# number of samples
+keepBestFraction=.4		# what fraction of best coarse correspondences to keep
+visualize=true			# set to false if you only want images / dense map
+workDir="./WorkDir"		# work folder
+createDenseWithGMDS=false	# create dense map? - WARNING: potentially slow
+
+
+############ YOU SHOULD NOT NEED TO EDIT ANYTHING BELOW THIS LINE #######################
+	# read file names as arguments - or use default
+if [ $# -ge 2 ]; then
+	mesh1=$1
+	mesh2=$2
+else
+	echo =============================
+	echo ============ USAGE: =========
+	echo "    ./MobiusVoting mesh1.off mesh2.off"
+	echo
+	echo ============ NOTES: =========
+	echo "    Very few votes are casted by default. "
+	echo "    Set numVotes=O(N^3 * 10) for better performance"
+	echo =============================
+	exit
+fi
+
+	# separate file name and extension - to create workspace directory
+if [ ! -f $mesh1 ]; then
+	echo File $mesh1 does not exist!
+fi;
+
+if [ ! -f $mesh2 ]; then
+	echo File $mesh2 does not exist!
+fi;
+
+fileonly1=`basename $mesh1`
+fileonly2=`basename $mesh2`
+ext="."`echo "$fileonly1" | cut -d'.' -f2`
+mesh1name=`echo "$fileonly1" | cut -d'.' -f1`
+mesh2name=`echo "$fileonly2" | cut -d'.' -f1`
+	
+	# create workspace directory, copy files
+if [ ! -d $workDir ]; then
+	mkdir $workDir
+fi
+if [ ! -d $workDir ]; then
+	echo Could not create work folder: $workDir
+	exit
+fi
+
+if [ ! -d $workDir/$mesh1name ]; then
+	mkdir $workDir/$mesh1name
+fi
+
+if [ ! -f $workDir/$mesh1name/$mesh1name$ext ]; then
+	cp $mesh1 $workDir/$mesh1name
+fi
+
+if [ ! -d $workDir/$mesh2name ]; then
+	mkdir $workDir/$mesh2name/
+fi
+
+if [ ! -f $workDir/$mesh2name/$mesh2name$ext ]; then
+	cp $mesh2 $workDir/$mesh2name/
+fi
+
+	# NOTE: arguments to SurfaceVis below OVERWRITE settings.txt file
+	# I included them here for simplicity - so that one would not have to modify settings.txt
+	
+	# Set input files (copied to their work directories)
+params="-ConfSurfaces MeshName [$mesh1name $mesh2name] MeshExt $ext"
+	# Set number of votes to cast
+params="$params -RandomTripletSampler MaxNumSamples $numVotes"
+	# Set number of samples on surface
+params="$params -SamplesFine_EVEN MaxSamples $numSamples"
+	# What fraction to keep
+params="$params -AlgCorrConfmaps PickBestConf $keepBestFraction"
+	# Set whether to open visualization
+params="$params -Pipeline Visualize $visualize"
+	# Set workDir
+params="$params -Pipeline WorkFolder $workDir"
+	# Set dense map
+if [ $createDenseWithGMDS == "true" ]; then
+	params="$params -Pipeline PostFinal [DenseMap]"
+fi
+
+	# Run script: tested on Mac OS X and Linux operating systems
+./`uname`_`uname -m`_SurfaceVis ./settingsMobVoting.txt $params
+
+result=$workDir/$mesh1name/MobVote_Map_"$mesh1name"_to_"$mesh2name".final.coarse.map
+echo "Finished Mobius Voting. See the result in:"
+echo "     $result"
+echo "Format description: "
+echo "   http://www.cs.princeton.edu/~vk/CorrsCode/doc_bin.html#coarse.map"
+
+if [ $createDenseWithGMDS == "true" ]; then
+	result=MobVote_Map_DenseMap_"$mesh1name"_to_"$mesh2name".dense.gaps.map
+	echo "Dense Map Result:"
+	echo "     $result"
+	echo "Format description: "
+	echo "   http://www.cs.princeton.edu/~vk/CorrsCode/doc_bin.html#dense.gaps.map"
+fi
+

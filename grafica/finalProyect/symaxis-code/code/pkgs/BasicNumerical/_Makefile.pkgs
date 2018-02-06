@@ -1,0 +1,45 @@
+# At this point, you need to specify
+# NAME    : the name of output lib
+# CCSRCS  : the c++ file to be compiled
+# PKG_LIBS: external libs
+
+# Targets
+OBJS=$(CCSRCS:.cpp=.o)
+INCS=$(CCSRCS:.cpp=.h)
+
+# Compiler flags
+CC=g++
+BASE_CFLAGS=$(PKG_INCS) -Wall -I.
+DEBUG_CFLAGS=$(BASE_CFLAGS) -g
+OPT_CFLAGS=$(BASE_CFLAGS) -O3 #-DNDEBUG
+CFLAGS=$(DEBUG_CFLAGS) 
+
+.cpp.o:
+	$(CC) $(CFLAGS) -c $<
+
+# Get the operating system and architecture type
+OS=$(shell uname -s)
+ARCH=$(shell uname -m)
+
+# Directories
+RELEASE_DIR=../../release
+EXE_DIR=../bin/$(ARCH)
+LIB_DIR=../lib/$(ARCH)
+
+# Target name
+LIB=$(LIB_DIR)/lib$(NAME).a
+
+
+# Make targets
+opt:
+	    $(MAKE) $(LIB) "CFLAGS=$(OPT_CFLAGS)" 
+
+debug:
+	    $(MAKE) $(LIB) "CFLAGS=$(DEBUG_CFLAGS)" 
+
+$(LIB):     $(CCSRCS) $(OBJS) 
+	    mkdir -p $(LIB_DIR)
+	    rm -f $(LIB)
+	    ar ur $(LIB) $(OBJS)
+clean:
+	    - rm -f *~ *.o $(LIB)

@@ -1,0 +1,20 @@
+#!/bin/bash
+# !/bin/sh
+
+EXE="SurfaceVis"
+
+  # Remove executable (to trigger re-linking)
+ARCH=$(uname -m)
+rm ../$ARCH/$EXE
+
+  # Re-compile & re-link
+currDir=`pwd`
+cd ../../
+make
+
+  # get back 
+cd $currDir
+rm `uname`_`uname -m`_$EXE
+cp ../$ARCH/$EXE ./`uname`_`uname -m`_$EXE
+
+

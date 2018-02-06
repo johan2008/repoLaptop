@@ -1,0 +1,87 @@
+#!/bin/bash
+# !/bin/sh
+
+   # change some parameters. You can change more in settings.txt
+numSamples=256			# number of samples (for evaluating map quality, MCN)
+visualize=true			# set to false if you only want images / dense map
+workDir="./WorkDir"		# work folder
+createDenseWithGMDS="false"	# create dense map using GMDS (slow + low quality)
+
+############ YOU SHOULD NOT NEED TO EDIT ANYTHING BELOW THIS LINE #######################
+	# read file name as arguments - or use default
+if [ $# -ge 1 ]; then
+	mesh=$1
+else
+	echo =============================
+	echo ============ USAGE: =========
+	echo "    ./IntrinsicSymmetryBestConf mesh1.off"
+	echo
+	echo ============ NOTES: =========
+	echo "    this is an APPROXIMATE implementation of:"
+	echo "        http://www.cs.princeton.edu/~vk/IntrinsicSymmetry/"
+	echo "    Currently it does not support 4-point least-square-mobius, "
+	echo "    and thus might produce inferior results. "
+	echo "	  It also uses a better distortion metric" 
+	echo =============================
+	exit
+fi
+
+	# separate file name and extension - to create workspace directory
+if [ ! -f $mesh ]; then
+	echo File $mesh does not exist!
+fi;
+
+fileonly=`basename $mesh`
+ext="."`echo "$fileonly" | cut -d'.' -f2`
+meshname=`echo "$fileonly" | cut -d'.' -f1`
+
+	# create workspace directory, copy files
+if [ ! -d $workDir ]; then
+	mkdir $workDir
+fi
+
+if [ ! -d $workDir ]; then
+	echo Could not create work directory: $workDir
+	exit
+fi
+
+if [ ! -d $workDir/$meshname ]; then
+	mkdir $workDir/$meshname
+fi
+
+if [ ! -f $workDir/$meshname/$meshname$ext ]; then
+	cp $mesh $workDir/$meshname
+fi
+
+	# NOTE: arguments to SurfaceVis below OVERWRITE settings.txt file
+	# I included them here for simplicity - so that one would not have to modify settings.txt
+	
+	# Set input files (copied to their work directories)
+params="-ConfSurfaces MeshName [$meshname] MeshExt $ext"
+	# Set whether to open visualization
+params="$params -Pipeline Visualize $visualize"
+	# Set workDir
+params="$params -Pipeline WorkFolder $workDir"
+	# Set dense map
+if [ $createDenseWithGMDS == "true" ]; then
+	params="$params -Pipeline PostFinal [DenseMap]"
+fi
+
+
+	# Run script: tested on Mac OS X and Linux operating systems
+./`uname`_`uname -m`_SurfaceVis ./settingsSymmetryBestConf.txt $params
+result=$workDir/$meshname/IS_BestConf_Map_"$meshname"_to_"$meshname".final.coarse.map
+echo "Finished Intrinsic Symmetry Search. See the result in: "
+echo "        $result" 
+echo "Format description: "
+echo "   http://www.cs.princeton.edu/~vk/CorrsCode/doc_bin.html#coarse.map"
+if [ $createDenseWithGMDS == "true" ]; then
+	result=MobVote_Map_DenseMap_"$mesh1name"_to_"$mesh2name".dense.gaps.map
+	echo "Dense Map Result:"
+	echo "     $result"
+	echo "Format description: "
+	echo "   http://www.cs.princeton.edu/~vk/CorrsCode/doc_bin.html#dense.gaps.map"
+fi
+
+
+
