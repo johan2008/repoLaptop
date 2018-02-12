@@ -1,0 +1,16 @@
+Stats:
+	Average	[0.944855]
+	Folder	[218]
+	Guessed	[0.428571]
+	ObjFn	[0]
+	PerSampleErrors	[1.67504, 1.73241, 0.136125, 1.42602, 1.38544, 0.0921546, 0.166802]
+	Time	[0]
+	TimeBench	[0]
+	TimeInit	[0]
+	TimeMaps	[0]
+StatsWithFlip:
+	Average	[0.11161]
+	Flipped	[true]
+	Guessed	[1]
+	ObjFn	[0]
+	PerSampleErrors	[0.129701, 0.14598, 0.136125, 0.0807189, 0.0297901, 0.0921546, 0.166802]

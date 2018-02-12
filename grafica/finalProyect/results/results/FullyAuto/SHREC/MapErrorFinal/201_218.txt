@@ -1,0 +1,6 @@
+Stats:
+    Average [0.831912]
+    Folder  [0]
+    Guessed [0]
+    ObjFn   [0]
+PerSampleErrors [1.5661, 1.56887, 0.0172629, 1.18554, 1.18591, 0.0119271, 0.287775]
