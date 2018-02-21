@@ -18,7 +18,13 @@ using namespace std;
 
 class axisExtraction{
 	public:
-		MinimumEuclideanDistances(model2* g_model, vector<point3>* point);
+		//axisExtraction();
+		double MinimumEuclideanDistances(model* g_model, vector<point3>* point);
+		void printData(	model* g_model);
+		point3 create_plane(model* g_model);
+		point3 getCentroide(model* g_model);
+		double averageDistance(model* g_model);
 
+		
 
-}
+};

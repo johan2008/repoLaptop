@@ -1,3 +1,4 @@
+#pragma once
 #include "Angel-yjc.h"
 #include <string>
 #include <vector>
@@ -13,8 +14,6 @@
 #include "texture.h"
 #include "stb_image.h"
 using namespace std;
-
-
 
 
 typedef Angel::vec3  point3;
@@ -38,5 +37,5 @@ class model{
 			color3 *colors;
 			int nv, nf;
 			model(string a,  int b );
-			double MinimumEuclideanDistances();
+
 };
