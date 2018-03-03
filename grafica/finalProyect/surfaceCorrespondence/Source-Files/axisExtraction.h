@@ -24,6 +24,8 @@ class axisExtraction{
 		point3 create_plane(model* g_model);
 		point3 getCentroide(model* g_model);
 		double averageDistance(model* g_model);
+		double epsilon(model* g_model);
+		void cero_level(model* g_model);
 
 		
 

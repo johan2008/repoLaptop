@@ -17,7 +17,7 @@ using namespace std;
 
 
 
-model::model(string fileName, int numImg){
+model::model(string fileName, int numImg, int escale){
 	string readLine;
 	int delPos1, delPos2, delPos3, delPos4;
 	ifstream in(fileName.c_str());
@@ -29,24 +29,22 @@ model::model(string fileName, int numImg){
 	getline(in,readLine);
 	delPos1 = readLine.find(" ",0);
 	nv = atoi(readLine.substr(0,delPos1+1).c_str());
-	cout<<"nv:   "<<nv<<endl;
 
 	delPos2 = readLine.find(" ",delPos1);
 	nf = atoi(readLine.substr(delPos1,delPos2+1).c_str());
-	cout<<"nf:   "<<nf<<endl;
 
 	positions = new point3[nv];
 	
 	for(int n=0; n<nv; n++){
 		getline(in,readLine);
 		delPos1 = readLine.find(" ",0);
-		positions[n].x = atof(readLine.substr(0,delPos1).c_str()) +3*numImg;
+		positions[n].x = atof(readLine.substr(0,delPos1).c_str())/escale +3*numImg;
 		//cout<<"positions x:   "<<positions[n].x<<endl;
 		delPos2 = readLine.find(" ", delPos1+1);
-		positions[n].y = atof(readLine.substr(delPos1,delPos2 ).c_str());
+		positions[n].y = atof(readLine.substr(delPos1,delPos2 ).c_str())/escale;
 		//cout<<"positions y:   "<<positions[n].y<<endl;
 		delPos3 = readLine.find(" ", delPos2+1);
-		positions[n].z = atof(readLine.substr(delPos2,delPos3 ).c_str());
+		positions[n].z = atof(readLine.substr(delPos2,delPos3 ).c_str())/escale;
 		//cout<<"positions z:   "<<positions[n].z<<endl;
 	}		 
 	facades = new facade[nf];
@@ -61,5 +59,6 @@ model::model(string fileName, int numImg){
 		delPos4 = readLine.find(" ",delPos3+1);
 		facades[n].v3 = atoi(readLine.substr(delPos3,delPos4 ).c_str());
 	}
+	cout<<"nv: "<<nv<<endl;;
 }
 

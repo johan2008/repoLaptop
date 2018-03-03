@@ -56,10 +56,6 @@ double MinimumEuclideanDistances(model* g_model, vector<point3>* point){
 
 
 void axisExtraction::printData(model* g_model){
-	cout<<"data g_model:::::::::::::::::  "<<endl;
-
-	cout<<"model::: "<<g_model->nf<<endl;;
-
 
 }
 
@@ -81,7 +77,6 @@ point3 axisExtraction::create_plane(model* g_model){
 		/* code */
 		sum = sum + g_model->positions[i];
 	}
-	cout<<"POINTS::  "<<sum.x<<endl;
 	point3 centroide = sum*(1.0/g_model->nv);
 
 	double xx = 0.0;
@@ -120,10 +115,7 @@ point3 axisExtraction::create_plane(model* g_model){
 		y = xy*xz - yz*xx;
 		z = det_z;
 	}
-
-	cout<<"X Y Z : "<< x<<"  -  "<<"  -  "<<y<<"  -  "<<z<<endl;
-	cout<<"centroide:  "<<centroide<<endl;
-
+	cout<<"x: "<<x<<" y: "<<y<<" z: "<<z<<endl;
 	return centroide;
 }
 
@@ -173,13 +165,21 @@ double axisExtraction::averageDistance(model* g_model){
 	return 0.03*sqrt(area);
 }
 
-
-void cero_level(model* g_model){
-	
-	for (int i = 0; i < g_model->nf; ++i)
-	{
-		//if()
-	}
+double axisExtraction::epsilon(model* g_model){
+	double area = areaMesh(g_model);
+	cout<<"AREA TOTAL:  "<<areaMesh(g_model)<<endl;
+	return 0.03*sqrt(area);
+}
 
 
+void axisExtraction::cero_level(model* g_model){
+	int i = 0;
+	for(int n=0; n< g_model->nv; n++)
+    {
+        if( abs(g_model->positions[n].z) < 0.01 ){
+        	//cout<<"0- level"<<endl;
+        	i++;
+        }
+    }
+    
 } 

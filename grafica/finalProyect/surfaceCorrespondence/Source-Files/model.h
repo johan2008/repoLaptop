@@ -28,6 +28,11 @@ struct facade
 	GLuint v3;
 };
 
+struct curveStruct{
+    vector<point3> curve;
+    vector<color3> color;
+    double q;
+};
 
 
 class model{
@@ -36,6 +41,6 @@ class model{
 			facade *facades;
 			color3 *colors;
 			int nv, nf;
-			model(string a,  int b );
+			model(string a,  int b , int scale);
 
 };
